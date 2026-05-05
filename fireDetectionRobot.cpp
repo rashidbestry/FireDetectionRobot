@@ -42,15 +42,39 @@ class solMotor : public Motor {
 
 sagMotor sag_Motor(0, 1);
 solMotor sol_Motor(2, 3);
+const int solPin  = 6;
+const int ortaPin = 5;
+const int sagPin  = 4;
 
 void setup() {
   sag_Motor.baslat();
   sol_Motor.baslat();
+  pinMode(solPin, INPUT);
+  pinMode(ortaPin, INPUT);
+  pinMode(sagPin, INPUT);
 }
 
 void loop() {
-  sola_don();
-  saga_don();
+  int solVal  = digitalRead(solPin);
+  int ortaVal = digitalRead(ortaPin);
+  int sagVal  = digitalRead(sagPin);
+
+  if (ortaVal == 1 && solVal == 0 && sagVal == 0) {
+    // Sadece orta sensör siyah görüyorsa
+    duz_git();
+  } 
+  else if (solVal == 1) {
+    // Sol sensör siyah gördüğü an (orta görse de görmese de) sola dön
+    sola_don();
+  } 
+  else if (sagVal == 1) {
+    // Sağ sensör siyah gördüğü an sağa dön
+    saga_don();
+  } 
+  else {
+    // Hepsi beyaz görüyorsa (Çizgiden çıkıldıysa)
+    dur();
+  }
 }
 
 void sola_don() {
@@ -65,4 +89,14 @@ void saga_don() {
   delay(500);
   sol_Motor.dur();
   delay(500);
+}
+
+void dur(){
+    sol_Motor.dur();
+    sag_Motor.dur();
+}
+
+void duz_git(){
+    sol_Motor.ileri();
+    sag_Motor.ileri();
 }
