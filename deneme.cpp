@@ -17,14 +17,14 @@ class Motor {
       pinMode(pin2, OUTPUT);
     }
 
-    void ileri() {
-      analogWrite(pin2, 120);
+    void ileri(int speed) {
+      analogWrite(pin2, speed);
       analogWrite(pin1, 0);
     }
 
     void geri() {
       analogWrite(pin2, 0);
-      analogWrite(pin1, 120);
+      analogWrite(pin1, 125);
     }
 
     void dur() {
@@ -81,23 +81,17 @@ void loop() {
     // saga
     sol_denge();
   } 
-  else if (LS == WHITE && MS == BLACK  && RS == WHITE) {
-    // Sol sensör siyah gördüğü an (orta görse de görmese de) sola dön
-    duz_git();
-  } 
   else if (LS ==WHITE  && MS == WHITE  && RS == BLACK) {
     // Sağ sensör siyah gördüğü an sağa dön
     sag_denge();
   } 
   else if (LS == WHITE && MS == BLACK  && RS == BLACK) {
     // Sağ sensör siyah gördüğü an sağa dön
-    dur();
-    saga_don();
+    sag_denge();
   }
   else if (LS == BLACK && MS == BLACK  && RS ==WHITE ) {
     // Solda yol bulundu
-    dur();
-    sola_don();
+    sol_denge();
   }
   else {
     // Hepsi beyaz görüyorsa (Çizgiden çıkıldıysa)
@@ -105,35 +99,29 @@ void loop() {
   }
 }
 
-void saga(){
-  sol_Motor.ileri();
-}
-void sola(){
-  sag_Motor.ileri();
-}
 void sag_denge(){
-  analogWrite(9,slow_speed);
+  analogWrite(9,med_speed);
   analogWrite(10,0);
-  analogWrite(6,high_speed);
+  analogWrite(6,high_speed+40);
   analogWrite(5,0);
 }
 
 void sol_denge(){
-  analogWrite(9,high_speed);
+  analogWrite(9,high_speed+40);
   analogWrite(10,0);
-  analogWrite(6,slow_speed+30);
+  analogWrite(6,med_speed);
   analogWrite(5,0);
 }
 
 void sola_don() {
-  sag_Motor.ileri();
+  sag_Motor.ileri(125);
   delay(250);
   sol_Motor.geri();
   delay(250);
 }
 
 void saga_don() {
-  sol_Motor.ileri();
+  sol_Motor.ileri(125);
   delay(250);
   sag_Motor.geri();
   delay(250);
@@ -145,6 +133,6 @@ void dur(){
 }
 
 void duz_git(){
-    sol_Motor.ileri();
-    sag_Motor.ileri();
+    sol_Motor.ileri(170);
+    sag_Motor.ileri(125);
 }
