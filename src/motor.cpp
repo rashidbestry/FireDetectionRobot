@@ -1,4 +1,4 @@
-#include "../include/engine.h"
+#include "../include/motor.h"
 #include <Arduino.h>
 
 Motor::Motor(int p1, int p2) : pin1(p1), pin2(p2) {
@@ -6,14 +6,14 @@ Motor::Motor(int p1, int p2) : pin1(p1), pin2(p2) {
   pinMode(pin2, OUTPUT);
 }
 
-void Motor::ileri() {
-  analogWrite(pin2, 120);
+void Motor::ileri(int speed) {
+  analogWrite(pin2, speed);
   analogWrite(pin1, 0);
 }
 
-void Motor::geri() {
+void Motor::geri(int speed) {
   analogWrite(pin2, 0);
-  analogWrite(pin1, 120);
+  analogWrite(pin1, speed);
 }
 
 void Motor::dur() {

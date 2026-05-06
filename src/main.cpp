@@ -1,13 +1,14 @@
 #include <Arduino.h>
-#include "movement.h"
-#include "engine.h"
+#include "../include/movement.h"
+#include "../include/motor.h"
 
-const int L_S_pin  = 2;
-const int M_S_pin = 3;
-const int R_S_pin = 4;
+const int L_SIG_pin  = 2;
+const int M_SIG_pin = 3;
+const int R_SIG_pin = 4;
+const int Fire_SIG = 555;
+const int FAN_ENABLE = 455; 
 const int BLACK=1;
 const int WHITE=0;
-
 
 Motor Left(5,6);
 Motor Right(10,9);
@@ -15,16 +16,16 @@ Motor Right(10,9);
 Movement robot(Left,Right);
 
 void setup() {
-    pinMode(L_S_pin, INPUT);
-    pinMode(M_S_pin, INPUT);
-    pinMode(R_S_pin, INPUT);
+    pinMode(L_SIG_pin, INPUT);
+    pinMode(M_SIG_pin, INPUT);
+    pinMode(R_SIG_pin, INPUT);
 }
 
 void loop() {
   
-  int LS  = digitalRead(L_S_pin);
-  int MS = digitalRead(M_S_pin);
-  int RS  = digitalRead(R_S_pin);
+  int LS  = digitalRead(L_SIG_pin);
+  int MS = digitalRead(M_SIG_pin);
+  int RS  = digitalRead(R_SIG_pin);
   
 
    if ( LS == BLACK && MS == WHITE  && RS == WHITE) {
