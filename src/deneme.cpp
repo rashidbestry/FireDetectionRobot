@@ -23,8 +23,8 @@ class Motor {
     }
 
     void geri() {
-      digitalWrite(pin2, LOW);
-      digitalWrite(pin1, HIGH);
+      analogWrite(pin2, 0);
+      analogWrite(pin1, 120);
     }
 
     void dur() {
@@ -121,22 +121,22 @@ void sag_denge(){
 void sol_denge(){
   analogWrite(9,high_speed);
   analogWrite(10,0);
-  analogWrite(6,slow_speed);
+  analogWrite(6,slow_speed+30);
   analogWrite(5,0);
 }
 
 void sola_don() {
   sag_Motor.ileri();
-  delay(500);
-  sag_Motor.dur();
-  delay(500);
+  delay(250);
+  sol_Motor.geri();
+  delay(250);
 }
 
 void saga_don() {
   sol_Motor.ileri();
-  delay(500);
-  sol_Motor.dur();
-  delay(500);
+  delay(250);
+  sag_Motor.geri();
+  delay(250);
 }
 
 void dur(){
