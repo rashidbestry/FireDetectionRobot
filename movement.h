@@ -13,13 +13,13 @@ public:
     int high_speed;
 public:
     Movement(Motor &L, Motor &R);
-    static void right_balance();
-    static void left_balance();
-    static void turn_left();
-    static void turn_right();
-    static void go();
-    static void stop();
-    void start();
+    void right_balance();
+    void left_balance();
+    void turn_left();
+    void turn_right();
+    void go();
+    void stop();
+    void start(int TL, int TR, int LS, int MS, int RS);
 };
 
 #endif

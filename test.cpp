@@ -1,10 +1,15 @@
+//
+// Created by Rashid on 5/7/2026.
+//
+
+#include "test.h"
 #include <Arduino.h>
 
 class Motor {
   protected: // Alt sınıfların erişebilmesi için protected
     int pin1;
     int pin2;
-    
+
 
   public:
     Motor(int p1, int p2) {
@@ -13,7 +18,7 @@ class Motor {
     }
 
     void baslat() {
-      pinMode(pin1, OUTPUT); 
+      pinMode(pin1, OUTPUT);
       pinMode(pin2, OUTPUT);
     }
 
@@ -31,13 +36,13 @@ class Motor {
       digitalWrite(pin2, LOW);
       digitalWrite(pin1, LOW);
     }
-}; 
+};
 
 class sagMotor : public Motor {
   public:
     sagMotor(int p1, int p2) : Motor(p1, p2) {}
 
-  
+
 };
 
 class solMotor : public Motor {
@@ -47,13 +52,14 @@ class solMotor : public Motor {
 
 sagMotor sag_Motor(10, 9);
 solMotor sol_Motor(5, 6);
-// sensor pin 
+// sensor pin
 const int L_S_pin  = 2;
 const int M_S_pin = 3;
 const int R_S_pin = 4;
+const int Fire_pin =13;
 
-// 
-const int SLOW_SPEED=50;
+//
+const int slow_speed=50;
 const int med_speed=125;
 const int high_speed=210;
 void setup() {
@@ -62,6 +68,7 @@ void setup() {
   pinMode(L_S_pin, INPUT);
   pinMode(M_S_pin, INPUT);
   pinMode(R_S_pin, INPUT);
+  pinMode(Fire_pin,INPUT);
 }
 
 void loop() {
@@ -76,15 +83,19 @@ void loop() {
   int BLACK=1;
   int WHITE=0;
 
- 
+  if(digitalRead(Fire_pin)==0){
+    dur();
+    delay(10000);
+  }
+
   if ( LS == BLACK && MS == WHITE  && RS == WHITE) {
     // saga
     sol_denge();
-  } 
+  }
   else if (LS ==WHITE  && MS == WHITE  && RS == BLACK) {
     // Sağ sensör siyah gördüğü an sağa dön
     sag_denge();
-  } 
+  }
   else if (LS == WHITE && MS == BLACK  && RS == BLACK) {
     // Sağ sensör siyah gördüğü an sağa dön
     sag_denge();
