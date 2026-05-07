@@ -5,7 +5,7 @@
 #include "motor.h"
 
 class Movement {
-protected:
+public:
     Motor &Left_mt;
     Motor &Right_mt;
     int slow_speed;
@@ -13,12 +13,13 @@ protected:
     int high_speed;
 public:
     Movement(Motor &L, Motor &R);
-    void right_balance();
-    void left_balance();
-    void turn_left();
-    void turn_right();
-    void go();
-    void stop();
+    static void right_balance();
+    static void left_balance();
+    static void turn_left();
+    static void turn_right();
+    static void go();
+    static void stop();
+    void start();
 };
 
 #endif
