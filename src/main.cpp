@@ -1,13 +1,13 @@
 #include <Arduino.h>
 
-// --- MOTOR PİNLERİ ---
+// --------------------------------------------------- MOTOR PİNLERİ --------------------------------------------------
 
 const int SOL_MOTOR_PIN1 = 5;
 const int SOL_MOTOR_PIN2 = 6;
 const int SAG_MOTOR_PIN2 = 9;
 const int SAG_MOTOR_PIN1 = 10;
 
-// --- MERKEZ 3 SENSÖR (DENGE İÇİN) ---
+// ---MERKEZ 3 SENSÖR (DENGE İÇİN) ---
 
 const int LEFT_SENSOR_PIN = 2;
 const int MED_SENSOR_PIN = 3;
@@ -23,6 +23,8 @@ const int TURN_LEFT_SENSOR_PIN = 12;
 const int FIRE_PIN = 13;
 const int FAN_INA = 7;
 const int FAN_INB = 8;
+
+// ------------------------------------------------- TEMEL DEĞİŞKENLER ------------------------------------------------
 
 // --- SIYAH ÇİZGI / BEYAZ ALAN---
 
@@ -44,7 +46,7 @@ int kavsakAsamasi = 0;
 enum RobotState {CIZGI_IZLE, YANGIN_SONDUR};
 RobotState currentState = CIZGI_IZLE;
 
-// ---------------- MOTOR FONKSİYONLARI ----------------
+// ------------------------------------------------ MOTOR FONKSİYONLARI -----------------------------------------------
 
 void motor_ileri(int pin1, int pin2, int speed) {
   analogWrite(pin1, 0); analogWrite(pin2, speed);
@@ -56,7 +58,7 @@ void motor_dur(int pin1, int pin2) {
   digitalWrite(pin1, LOW); digitalWrite(pin2, LOW);
 }
 
-// ---------------- ROBOT FONKSİYONLARI ----------------
+// ------------------------------------------------- ROBOT FONKSİYONLARI ----------------------------------------------
 
 void duz_git() {
   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, MED_SPEED + 40);
@@ -102,12 +104,10 @@ void cizgiyi_takip_et(int LS, int MS, int RS) {
   }
 }
 
-// ---------------- KAVŞAK KARAR MANTIĞI ----------------
+// --------------------------------------------------- KAVŞAK KARAR MANTIĞI -------------------------------------------
 
 void kavsak_karari_ver(int EXT_L, int EXT_R) {
   dur();
-
-  // ÇİFT YÖNLÜ KAVŞAK
 
   if (EXT_L == BLACK && EXT_R == BLACK) {
     if (kavsakAsamasi == 0) {
@@ -125,22 +125,34 @@ void kavsak_karari_ver(int EXT_L, int EXT_R) {
       kavsakAsamasi = 0;
     }
   }
-
 }
 
-// ---------------- KURULUM VE ANA DÖNGÜ ----------------
+// -------------------------------------------------------- SETUP -----------------------------------------------------
 
 void setup() {
-  pinMode(SAG_MOTOR_PIN1, OUTPUT); pinMode(SAG_MOTOR_PIN2, OUTPUT);
-  pinMode(SOL_MOTOR_PIN1, OUTPUT); pinMode(SOL_MOTOR_PIN2, OUTPUT);
-  pinMode(LEFT_SENSOR_PIN, INPUT); pinMode(MED_SENSOR_PIN, INPUT); pinMode(RIGHT_SENSOR_PIN, INPUT);
-  pinMode(TURN_LEFT_SENSOR_PIN, INPUT); pinMode(TURN_RIGHT_SENSOR_PIN, INPUT);
-  pinMode(FIRE_PIN, INPUT); pinMode(FAN_INA, OUTPUT); pinMode(FAN_INB, OUTPUT);
+
+  pinMode(SAG_MOTOR_PIN1, OUTPUT);
+  pinMode(SAG_MOTOR_PIN2, OUTPUT);
+  pinMode(SOL_MOTOR_PIN1, OUTPUT);
+  pinMode(SOL_MOTOR_PIN2, OUTPUT);
+
+  pinMode(LEFT_SENSOR_PIN, INPUT);
+  pinMode(MED_SENSOR_PIN, INPUT);
+  pinMode(RIGHT_SENSOR_PIN, INPUT);
+
+  pinMode(TURN_LEFT_SENSOR_PIN, INPUT);
+  pinMode(TURN_RIGHT_SENSOR_PIN, INPUT);
+
+  pinMode(FIRE_PIN, INPUT);
+
+  pinMode(FAN_INA, OUTPUT);
+  pinMode(FAN_INB, OUTPUT);
 }
+
+// -------------------------------------------------------- LOOP -----------------------------------------------------
 
 void loop() {
 
-  // 1. ACİL DURUM KONTROLÜ
    if (digitalRead(FIRE_PIN) == 0) {
      currentState = YANGIN_SONDUR;
    }
@@ -148,23 +160,23 @@ void loop() {
    int LS = digitalRead(LEFT_SENSOR_PIN);
    int MS = digitalRead(MED_SENSOR_PIN);
    int RS = digitalRead(RIGHT_SENSOR_PIN);
-   int EXT_L = digitalRead(TURN_LEFT_SENSOR_PIN);
-   int EXT_R = digitalRead(TURN_RIGHT_SENSOR_PIN);
 
-   // 2. DURUM MAKİNESİ
+   int TURN_L = digitalRead(TURN_LEFT_SENSOR_PIN);
+   int TURN_R = digitalRead(TURN_RIGHT_SENSOR_PIN);
+
    switch (currentState) {
 
      case CIZGI_IZLE:
        // A. KAVŞAK GELDİ Mİ?
-       if (EXT_L == BLACK && EXT_R == WHITE) {
+       if (TURN_L == BLACK && TURN_R == WHITE) {
          sola_don_90();
 
        }
-       else if (EXT_L == WHITE && EXT_R == BLACK) {
+       else if (TURN_L == WHITE && TURN_R == BLACK) {
          saga_don_90();
        }
-       else if (EXT_L == BLACK && EXT_R == BLACK) {
-         kavsak_karari_ver(EXT_L, EXT_R);
+       else if (TURN_L == BLACK && TURN_R == BLACK) {
+         kavsak_karari_ver(TURN_L, TURN_R);
        }
        // if (EXT_L == BLACK || EXT_R == BLACK) {
        //   dur();
