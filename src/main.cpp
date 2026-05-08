@@ -1,78 +1,46 @@
 #include <Arduino.h>
 
-
-
-
-
-
-// Motor pinleri
+// --- MOTOR PİNLERİ ---
 const int SAG_MOTOR_PIN1 = 10;
 const int SAG_MOTOR_PIN2 = 9;
 const int SOL_MOTOR_PIN1 = 5;
 const int SOL_MOTOR_PIN2 = 6;
 
-// Çizgi Sensor pinleri
+// --- MERKEZ 3 SENSÖR (DENGE İÇİN) ---
 const int LEFT_SENSOR_PIN = 2;
 const int MED_SENSOR_PIN = 3;
 const int RIGHT_SENSOR_PIN = 4;
 
-// Alev Sensor pin
+// --- YENİ 2 DIŞ SENSÖR (KAVŞAK VE DÖNÜŞ İÇİN) ---
+const int EXT_LEFT_SENSOR_PIN = 12;
+const int EXT_RIGHT_SENSOR_PIN = 11;
+
+// --- DİĞER PİNLER ---
 const int FIRE_PIN = 13;
-
-// Hızlar
-
-const int SLOW_SPEED = 50;
-const int MED_SPEED = 125;
-const int HIGH_SPEED = 255;
-
-// Fan
 const int FAN_INA = 7;
 const int FAN_INB = 8;
-
-// Front distance
-constexpr int FRONT_TRIG_PIN = A4;
-constexpr int FRONT_ECHO_PIN = A5;
-
-long front_duration;
-int front_distance;
-
-
-//Back distance
-const int BACK_TRIG_PIN = A0;
-const int BACK_ECHO_PIN = A1;
-
-long back_duration;
-int back_distance;
-
-
 const int BLACK = 1;
 const int WHITE = 0;
 
+const int MED_SPEED = 125;
+const int HIGH_SPEED = 255;
+const int LOW_SPEED = 55;
 
+// --- HAFIZA ---
+int kavsakAsamasi = 0;
 
+// --- DURUM MAKİNESİ (Sadece 2 durum kaldı!) ---
+enum RobotState {
+  CIZGI_IZLE,
+  YANGIN_SONDUR
+};
+RobotState currentState = CIZGI_IZLE;
 
+// ---------------- MOTOR FONKSİYONLARI ----------------
 
-// ---------------- MOTOR FUNCTIONS ----------------
-
-// Motor ileri
-void motor_ileri(int pin1, int pin2, int speed) {
-  analogWrite(pin1, 0);
-  analogWrite(pin2, speed);
-}
-
-// Motor geri
-void motor_geri(int pin1, int pin2, int speed) {
-  analogWrite(pin2, 0);
-  analogWrite(pin1, speed);
-}
-
-// Motor dur
-void motor_dur(int pin1, int pin2) {
-  digitalWrite(pin1, LOW);
-  digitalWrite(pin2, LOW);
-}
-
-// ---------------- ROBOT FUNCTIONS ----------------
+void motor_ileri(int pin1, int pin2, int speed) { analogWrite(pin1, 0); analogWrite(pin2, speed); }
+void motor_geri(int pin1, int pin2, int speed) { analogWrite(pin2, 0); analogWrite(pin1, speed); }
+void motor_dur(int pin1, int pin2) { digitalWrite(pin1, LOW); digitalWrite(pin2, LOW); }
 
 void dur() {
   motor_dur(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2);
@@ -80,145 +48,151 @@ void dur() {
 }
 
 void duz_git() {
-  motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, MED_SPEED+40);
+  motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, MED_SPEED + 40);
   motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, MED_SPEED);
 }
 
-void sag_denge() {
-  analogWrite(SAG_MOTOR_PIN2, MED_SPEED);
-  analogWrite(SAG_MOTOR_PIN1, 0);
+// ---------------- SENSÖR KONTROLLÜ DÖNÜŞLER ----------------
 
-  analogWrite(SOL_MOTOR_PIN2, HIGH_SPEED);
-  analogWrite(SOL_MOTOR_PIN1, 0);
-}
-
-void sol_denge() {
-  analogWrite(SAG_MOTOR_PIN2, HIGH_SPEED);
-  analogWrite(SAG_MOTOR_PIN1, 0);
-
-  analogWrite(SOL_MOTOR_PIN2, MED_SPEED);
-  analogWrite(SOL_MOTOR_PIN1, 0);
-}
-
-void sola_don() {
+void sola_don_90() {
   motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
+  motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, LOW_SPEED);
+  //motor_dur(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2);
   delay(250);
-  motor_dur(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2);
-  delay(250);
+
+  // while(digitalRead(MED_SENSOR_PIN) == WHITE) {
+  //   motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, MED_SPEED);
+  //   motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, MED_SPEED);
+  // }
+  // dur();
 }
 
-void saga_don() {
+void saga_don_90() {
   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+  motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, LOW_SPEED);
+  //motor_dur(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2);
   delay(250);
-  motor_dur(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2);
-  delay(250);
+
+
+  // while(digitalRead(MED_SENSOR_PIN) == WHITE) {
+  //   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, MED_SPEED);
+  //   motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, MED_SPEED);
+  // }
+  // dur();
 }
 
-int front_distance_value() {
-  digitalWrite(FRONT_TRIG_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(FRONT_TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(FRONT_TRIG_PIN, LOW);
-  front_duration = pulseIn(FRONT_ECHO_PIN, HIGH);
-  front_distance = front_duration * 0.034 / 2;
-  // Serial.print("front_distance: ");
-  // Serial.print(front_distance);
-  // Serial.println(" cm");
-  return front_distance;
+void tam_tur_don() {
+  dur();
+  motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+  motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,HIGH_SPEED );
+  delay(600);
+
+  // while(digitalRead(MED_SENSOR_PIN) == WHITE) {
+  //   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, MED_SPEED);
+  //   motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, MED_SPEED);
+  // }
+
 }
 
-
-int back_distance_value() {
-  digitalWrite(BACK_TRIG_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(BACK_TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(BACK_TRIG_PIN, LOW);
-  back_duration = pulseIn(BACK_ECHO_PIN, HIGH);
-  back_distance = back_duration * 0.034 / 2;
-  // Serial.print("back_distance: ");
-  // Serial.print(back_distance);
-  // Serial.println(" cm");
-  return back_distance;
-}
-
-// ---------------- FIRE DETECT ----------------
-
-void fire_detect() {
-
-  if (digitalRead(FIRE_PIN) == 0) {
-    dur();
-    digitalWrite(FAN_INA, LOW);
-    digitalWrite(FAN_INB, HIGH);
-  }
-  if (digitalRead(FIRE_PIN) == 1) {
-    digitalWrite(FAN_INA, LOW);
-    digitalWrite(FAN_INB, LOW);
-  }
-}
-
-// ---------------- LINE TRACK ----------------
-
-void line_track() {
-
-  int LS = digitalRead(LEFT_SENSOR_PIN);
-  int MS = digitalRead(MED_SENSOR_PIN);
-  int RS = digitalRead(RIGHT_SENSOR_PIN);
-
+// ---------------- ÇİZGİ TAKİP YARDIMCISI ----------------
+void cizgiyi_takip_et(int LS, int MS, int RS) {
   if (LS == BLACK && MS == WHITE && RS == WHITE) {
-    sol_denge();
+      motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
+      motor_dur(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2);
   }
   else if (LS == WHITE && MS == WHITE && RS == BLACK) {
-    sag_denge();
-  }
-  else if (LS == WHITE && MS == BLACK && RS == BLACK) {
-    sag_denge();
-  }
-  else if (LS == BLACK && MS == BLACK && RS == WHITE) {
-    sol_denge();
+      motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+      motor_dur(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2);
   }
   else {
-    duz_git();
+      duz_git();
   }
 }
 
+// ---------------- KAVŞAK KARAR MANTIĞI ----------------
+void kavsak_karari_ver(int EXT_L, int EXT_R) {
+  dur();
+
+  // ÇİFT YÖNLÜ KAVŞAK
+  if (EXT_L == BLACK && EXT_R == BLACK) {
+    if (kavsakAsamasi == 0) {
+      saga_don_90();
+      kavsakAsamasi = 1;
+    }
+    else if (kavsakAsamasi == 1) {
+      duz_git();
+      delay(300);
+      dur();
+      kavsakAsamasi = 2;
+    }
+    else if (kavsakAsamasi == 2) {
+      saga_don_90();
+      kavsakAsamasi = 0;
+    }
+  }
+
+}
+
+// ---------------- KURULUM VE ANA DÖNGÜ ----------------
+
 void setup() {
-  Serial.begin(9600);
-
-  pinMode(SAG_MOTOR_PIN1, OUTPUT);
-  pinMode(SAG_MOTOR_PIN2, OUTPUT);
-  pinMode(SOL_MOTOR_PIN1, OUTPUT);
-  pinMode(SOL_MOTOR_PIN2, OUTPUT);
-
-  pinMode(LEFT_SENSOR_PIN, INPUT);
-  pinMode(MED_SENSOR_PIN, INPUT);
-  pinMode(RIGHT_SENSOR_PIN, INPUT);
-
-  pinMode(FIRE_PIN, INPUT);
-
-  pinMode(FAN_INA, OUTPUT);
-  pinMode(FAN_INB, OUTPUT);
-
-  pinMode(FRONT_TRIG_PIN, OUTPUT);
-  pinMode(FRONT_ECHO_PIN, INPUT);
-
-  pinMode(BACK_TRIG_PIN, OUTPUT);
-  pinMode(BACK_ECHO_PIN, INPUT);
+  pinMode(SAG_MOTOR_PIN1, OUTPUT); pinMode(SAG_MOTOR_PIN2, OUTPUT);
+  pinMode(SOL_MOTOR_PIN1, OUTPUT); pinMode(SOL_MOTOR_PIN2, OUTPUT);
+  pinMode(LEFT_SENSOR_PIN, INPUT); pinMode(MED_SENSOR_PIN, INPUT); pinMode(RIGHT_SENSOR_PIN, INPUT);
+  pinMode(EXT_LEFT_SENSOR_PIN, INPUT); pinMode(EXT_RIGHT_SENSOR_PIN, INPUT);
+  pinMode(FIRE_PIN, INPUT); pinMode(FAN_INA, OUTPUT); pinMode(FAN_INB, OUTPUT);
 }
 
 void loop() {
 
+  // 1. ACİL DURUM KONTROLÜ
+   if (digitalRead(FIRE_PIN) == 0) {
+     currentState = YANGIN_SONDUR;
+   }
 
-  while ((back_distance_value() + back_distance_value() + back_distance_value()) <= 30 ) {
-    dur();
-    delay(1000);
-  }
-  while ((front_distance_value() + front_distance_value() + front_distance_value()) <= 30 ) {
-    dur();
-    delay(1000);
-  }
+   int LS = digitalRead(LEFT_SENSOR_PIN);
+   int MS = digitalRead(MED_SENSOR_PIN);
+   int RS = digitalRead(RIGHT_SENSOR_PIN);
+   int EXT_L = digitalRead(EXT_LEFT_SENSOR_PIN);
+   int EXT_R = digitalRead(EXT_RIGHT_SENSOR_PIN);
 
-  fire_detect();
-  line_track();
+   // 2. DURUM MAKİNESİ
+   switch (currentState) {
+
+     case CIZGI_IZLE:
+       // A. KAVŞAK GELDİ Mİ?
+       if (EXT_L == BLACK && EXT_R == WHITE) {
+         sola_don_90();
+
+       }
+       else if (EXT_L == WHITE && EXT_R == BLACK) {
+         saga_don_90();
+       }
+       else if (EXT_L == BLACK && EXT_R == BLACK) {
+         kavsak_karari_ver(EXT_L, EXT_R);
+       }
+       // if (EXT_L == BLACK || EXT_R == BLACK) {
+       //   dur();
+       //   kavsak_karari_ver(EXT_L, EXT_R);
+       // }
+       // B. ÇİZGİ BİTTİ Mİ? (Odanın Sonu / Dead End)
+       // else if (LS == WHITE && MS == WHITE && RS == WHITE) {
+       //   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+       //   // Odanın sonuna gelindi, ateş bulunamadı. Geri dön!
+       //   //tam_tur_don();
+       // }
+       // C. NORMAL ÇİZGİ TAKİBİ
+
+       else {
+         cizgiyi_takip_et(LS, MS, RS);
+       }
+       break;
+
+     case YANGIN_SONDUR:
+       dur();
+       digitalWrite(FAN_INA, LOW);
+       digitalWrite(FAN_INB, HIGH);
+       while(1);
+       break;
+  }
 }
