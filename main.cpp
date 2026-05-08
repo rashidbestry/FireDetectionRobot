@@ -1,104 +1,186 @@
 #include <Arduino.h>
 
-class Motor {
-  protected: // Alt sınıfların erişebilmesi için protected
-    int pin1;
-    int pin2;
+// --- MOTOR PİNLERİ ---
 
-  public:
-    Motor(int p1, int p2) {
-      pin1 = p1;
-      pin2 = p2;
-    }
+const int SOL_MOTOR_PIN1 = 5;
+const int SOL_MOTOR_PIN2 = 6;
+const int SAG_MOTOR_PIN2 = 9;
+const int SAG_MOTOR_PIN1 = 10;
 
-    void baslat() {
-      pinMode(pin1, OUTPUT); 
-      pinMode(pin2, OUTPUT);
-    }
+// --- MERKEZ 3 SENSÖR (DENGE İÇİN) ---
 
-    void ileri() {
-      digitalWrite(pin2, HIGH);
-      digitalWrite(pin1, LOW);
-    }
+const int LEFT_SENSOR_PIN = 2;
+const int MED_SENSOR_PIN = 3;
+const int RIGHT_SENSOR_PIN = 4;
 
-    void geri() {
-      digitalWrite(pin2, LOW);
-      digitalWrite(pin1, HIGH);
-    }
+// --- YENİ 2 DIŞ SENSÖR (KAVŞAK VE DÖNÜŞ İÇİN) ---
 
-    void dur() {
-      digitalWrite(pin2, LOW);
-      digitalWrite(pin1, LOW);
-    }
-}; 
+const int TURN_RIGHT_SENSOR_PIN = 11;
+const int TURN_LEFT_SENSOR_PIN = 12;
 
-class sagMotor : public Motor {
-  public:
-    sagMotor(int p1, int p2) : Motor(p1, p2) {}
-};
+// --- DİĞER PİNLER ---
 
-class solMotor : public Motor {
-  public:
-    solMotor(int p1, int p2) : Motor(p1, p2) {}
-};
+const int FIRE_PIN = 13;
+const int FAN_INA = 7;
+const int FAN_INB = 8;
 
-sagMotor sag_Motor(0, 1);
-solMotor sol_Motor(2, 3);
-const int solPin  = 6;
-const int ortaPin = 5;
-const int sagPin  = 4;
+// --- SIYAH ÇİZGI / BEYAZ ALAN---
 
-void setup() {
-  sag_Motor.baslat();
-  sol_Motor.baslat();
-  pinMode(solPin, INPUT);
-  pinMode(ortaPin, INPUT);
-  pinMode(sagPin, INPUT);
+const int BLACK = 1;
+const int WHITE = 0;
+
+// --- GENEL HIZLAR ---
+
+const int MED_SPEED = 125;
+const int HIGH_SPEED = 255;
+const int LOW_SPEED = 55;
+
+// --- HAFIZA ---
+
+int kavsakAsamasi = 0;
+
+// --- DURUM MAKİNESİ (Sadece 2 durum kaldı!) ---
+
+enum RobotState {CIZGI_IZLE, YANGIN_SONDUR};
+RobotState currentState = CIZGI_IZLE;
+
+// ---------------- MOTOR FONKSİYONLARI ----------------
+
+void motor_ileri(int pin1, int pin2, int speed) { analogWrite(pin1, 0); analogWrite(pin2, speed); }
+void motor_geri(int pin1, int pin2, int speed) { analogWrite(pin2, 0); analogWrite(pin1, speed); }
+void motor_dur(int pin1, int pin2) { digitalWrite(pin1, LOW); digitalWrite(pin2, LOW); }
+
+
+// ---------------- ROBOT FONKSİYONLARI ----------------
+
+void duz_git() {
+  motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, MED_SPEED + 40);
+  motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, MED_SPEED);
 }
 
-void loop() {
-  int solVal  = digitalRead(solPin);
-  int ortaVal = digitalRead(ortaPin);
-  int sagVal  = digitalRead(sagPin);
+void dur() {
+  motor_dur(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2);
+  motor_dur(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2);
+}
 
-  if (ortaVal == 1 && solVal == 0 && sagVal == 0) {
-    // Sadece orta sensör siyah görüyorsa
-    duz_git();
-  } 
-  else if (solVal == 1) {
-    // Sol sensör siyah gördüğü an (orta görse de görmese de) sola dön
-    sola_don();
-  } 
-  else if (sagVal == 1) {
-    // Sağ sensör siyah gördüğü an sağa dön
-    saga_don();
-  } 
+void sola_don_90() {
+    motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
+  motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, LOW_SPEED);
+  delay(250);
+}
+
+void saga_don_90() {
+    motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+  motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, LOW_SPEED);
+  delay(250);
+}
+
+void tam_tur_don() {
+  dur();
+  motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+  motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,HIGH_SPEED );
+  delay(600);
+}
+
+void cizgiyi_takip_et(int LS, int MS, int RS) {
+
+  if (LS == BLACK && MS == WHITE && RS == WHITE) {
+      motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
+      motor_dur(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2);
+  }
+  else if (LS == WHITE && MS == WHITE && RS == BLACK) {
+      motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+      motor_dur(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2);
+  }
   else {
-    // Hepsi beyaz görüyorsa (Çizgiden çıkıldıysa)
-    dur();
+      duz_git();
   }
 }
 
-void sola_don() {
-  sag_Motor.ileri();
-  delay(500);
-  sag_Motor.dur();
-  delay(5000);
+// ---------------- KAVŞAK KARAR MANTIĞI ----------------
+void kavsak_karari_ver(int EXT_L, int EXT_R) {
+  dur();
+
+  // ÇİFT YÖNLÜ KAVŞAK
+  if (EXT_L == BLACK && EXT_R == BLACK) {
+    if (kavsakAsamasi == 0) {
+      saga_don_90();
+      kavsakAsamasi = 1;
+    }
+    else if (kavsakAsamasi == 1) {
+      duz_git();
+      delay(300);
+      dur();
+      kavsakAsamasi = 2;
+    }
+    else if (kavsakAsamasi == 2) {
+      saga_don_90();
+      kavsakAsamasi = 0;
+    }
+  }
+
 }
 
-void saga_don() {
-  sol_Motor.ileri();
-  delay(500);
-  sol_Motor.dur();
-  delay(500);
+// ---------------- KURULUM VE ANA DÖNGÜ ----------------
+
+void setup() {
+  pinMode(SAG_MOTOR_PIN1, OUTPUT); pinMode(SAG_MOTOR_PIN2, OUTPUT);
+  pinMode(SOL_MOTOR_PIN1, OUTPUT); pinMode(SOL_MOTOR_PIN2, OUTPUT);
+  pinMode(LEFT_SENSOR_PIN, INPUT); pinMode(MED_SENSOR_PIN, INPUT); pinMode(RIGHT_SENSOR_PIN, INPUT);
+  pinMode(TURN_LEFT_SENSOR_PIN, INPUT); pinMode(TURN_RIGHT_SENSOR_PIN, INPUT);
+  pinMode(FIRE_PIN, INPUT); pinMode(FAN_INA, OUTPUT); pinMode(FAN_INB, OUTPUT);
 }
 
-void dur(){
-    sol_Motor.dur();
-    sag_Motor.dur();
-}
+void loop() {
 
-void duz_git(){
-    sol_Motor.ileri();
-    sag_Motor.ileri();
+  // 1. ACİL DURUM KONTROLÜ
+   if (digitalRead(FIRE_PIN) == 0) {
+     currentState = YANGIN_SONDUR;
+   }
+
+   int LS = digitalRead(LEFT_SENSOR_PIN);
+   int MS = digitalRead(MED_SENSOR_PIN);
+   int RS = digitalRead(RIGHT_SENSOR_PIN);
+   int EXT_L = digitalRead(TURN_LEFT_SENSOR_PIN);
+   int EXT_R = digitalRead(TURN_RIGHT_SENSOR_PIN);
+
+   // 2. DURUM MAKİNESİ
+   switch (currentState) {
+
+     case CIZGI_IZLE:
+       // A. KAVŞAK GELDİ Mİ?
+       if (EXT_L == BLACK && EXT_R == WHITE) {
+         sola_don_90();
+
+       }
+       else if (EXT_L == WHITE && EXT_R == BLACK) {
+         saga_don_90();
+       }
+       else if (EXT_L == BLACK && EXT_R == BLACK) {
+         kavsak_karari_ver(EXT_L, EXT_R);
+       }
+       // if (EXT_L == BLACK || EXT_R == BLACK) {
+       //   dur();
+       //   kavsak_karari_ver(EXT_L, EXT_R);
+       // }
+       // B. ÇİZGİ BİTTİ Mİ? (Odanın Sonu / Dead End)
+       // else if (LS == WHITE && MS == WHITE && RS == WHITE) {
+       //   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+       //   // Odanın sonuna gelindi, ateş bulunamadı. Geri dön!
+       //   //tam_tur_don();
+       // }
+       // C. NORMAL ÇİZGİ TAKİBİ
+
+       else {
+         cizgiyi_takip_et(LS, MS, RS);
+       }
+       break;
+
+     case YANGIN_SONDUR:
+       dur();
+       digitalWrite(FAN_INA, LOW);
+       digitalWrite(FAN_INB, HIGH);
+       while(1);
+       break;
+  }
 }
