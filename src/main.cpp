@@ -128,6 +128,21 @@ void cizgiyi_takip_et(int LS, int MS, int RS) {
     motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
     motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,MED_SPEED);
   }
+  else if (digitalRead(TURN_LEFT_SENSOR_PIN)==WHITE &&
+    LS == WHITE && MS == WHITE && RS == WHITE &&
+    digitalRead(TURN_RIGHT_SENSOR_PIN)==WHITE) {
+    duz_git();
+    delay(200);
+    dur();
+    delay(100);
+    geri_git();
+    delay(200);
+    if (digitalRead(TURN_LEFT_SENSOR_PIN)==WHITE &&
+    LS == WHITE && MS == WHITE && RS == WHITE &&
+    digitalRead(TURN_RIGHT_SENSOR_PIN)==WHITE) {
+      tam_tur_don();
+    }
+  }
   else {
       duz_git();
   }
