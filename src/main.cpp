@@ -128,6 +128,7 @@ void cizgiyi_takip_et(int LS, int MS, int RS) {
 
 // ------------------------------- MESAFE İŞLEMLERİ ------------------------------
 int front_distance_value() {
+    delay(5);
     digitalWrite(FRONT_TRIG_PIN, LOW);
     delayMicroseconds(2);
     digitalWrite(FRONT_TRIG_PIN, HIGH);
@@ -137,18 +138,6 @@ int front_distance_value() {
     front_distance = front_duration * 0.034 / 2;
     // Serial.println(front_distance);
     return front_distance;
-}
-
-int back_distance_value() {
-    digitalWrite(BACK_TRIG_PIN, LOW);
-    delayMicroseconds(2);
-    digitalWrite(BACK_TRIG_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(BACK_TRIG_PIN, LOW);
-    back_duration = pulseIn(BACK_ECHO_PIN, HIGH);
-    back_distance = back_duration * 0.034 / 2;
-    // Serial.println(front_distance);
-    return back_distance;
 }
 
 // ----------------------------- KAVŞAK KARAR MANTIĞI ----------------------------
@@ -193,8 +182,10 @@ void setup() {
 // ------------------------------------ LOOP -------------------------------------
 void loop() {
 
-   int mesafe = front_distance_value();
-   if (mesafe > 0 && mesafe < 5) {
+   int mesafe1 = front_distance_value();
+   int mesafe2 = front_distance_value();
+   int mesafe3 = front_distance_value();
+   if ((mesafe1 + mesafe2 + mesafe3) / 3  < 10) {
        currentState = DUVAR;
    }
 
