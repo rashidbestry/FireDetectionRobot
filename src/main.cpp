@@ -153,10 +153,10 @@ void kavsak_karari_ver(int TURN_L, int TURN_R) {
   duz_git();
   long timespot = millis();
   while (millis() - timespot < 150) {
-    if (digitalRead(LEFT_SENSOR_PIN) == BLACK) {
+    if (digitalRead(TURN_LEFT_SENSOR_PIN) == BLACK) {
       TURN_L = BLACK;
     }
-    if (digitalRead(RIGHT_SENSOR_PIN) == BLACK) {
+    if (digitalRead(TURN_RIGHT_SENSOR_PIN) == BLACK) {
       TURN_R = BLACK;
     }
   }
