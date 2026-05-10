@@ -114,12 +114,12 @@ void tam_tur_don() {
 
 void cizgiyi_takip_et(int LS, int MS, int RS) {
   if (LS == BLACK && MS == WHITE && RS == WHITE) {
-    motor_dur(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2);
+    motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2,MED_SPEED+TOLERANS);
     motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
   }
   else if (LS == WHITE && MS == WHITE && RS == BLACK) {
       motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
-      motor_dur(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2);
+      motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,MED_SPEED);
   }
   else {
       duz_git();
