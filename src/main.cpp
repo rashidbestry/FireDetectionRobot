@@ -45,7 +45,7 @@ const int HIGH_SPEED = 210;
 const int TOLERANS = 25;
 
 // --- DURUM MAKİNESİ ---
-enum RobotState {CIZGI_IZLE, DUVAR};
+enum RobotState {CIZGI_IZLE, DUVAR, YANGIN_SONDUR};
 RobotState currentState = CIZGI_IZLE;
 
 // ----------------------------- MOTOR FONKSİYONLARI -----------------------------
@@ -106,7 +106,12 @@ void tam_tur_don() {
   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
   motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
   delay(100);
-  while(digitalRead(RIGHT_SENSOR_PIN) != BLACK);
+  while(digitalRead(RIGHT_SENSOR_PIN) != BLACK) {
+    if (digitalRead(FIRE_PIN) == 0) {
+      currentState = YANGIN_SONDUR;
+      break;
+    }
+  }
   dur();
   delay(500);
 }
@@ -132,7 +137,7 @@ void cizgiyi_takip_et(int LS, int MS, int RS) {
     LS == WHITE && MS == WHITE && RS == WHITE &&
     digitalRead(TURN_RIGHT_SENSOR_PIN)==WHITE) {
     duz_git();
-    delay(200);
+    delay(100);
     dur();
     delay(100);
     geri_git();
@@ -218,9 +223,9 @@ void loop() {
    }
 
    // 2. Acil Durum Kontrolü
-   // if (digitalRead(FIRE_PIN) == 0) {
-   //   currentState = YANGIN_SONDUR;
-   // }
+   if (digitalRead(FIRE_PIN) == 0) {
+     currentState = YANGIN_SONDUR;
+   }
 
    // 3. Sensör Okumaları
    int LS = digitalRead(LEFT_SENSOR_PIN);
@@ -243,11 +248,24 @@ void loop() {
      currentState = CIZGI_IZLE;
      break;
 
-   //   case YANGIN_SONDUR:
-   //     dur();
-   //     digitalWrite(FAN_INA, LOW);
-   //     digitalWrite(FAN_INB, HIGH);
-   //     while(1); // Yangın sönene kadar sistemi kilitle
-   //     break;
+   case YANGIN_SONDUR:
+     dur();
+     digitalWrite(FAN_INA, LOW);
+     digitalWrite(FAN_INB, HIGH);
+     unsigned long startmilli = millis();
+     while (millis() - startmilli < 5000) {
+       while (digitalRead(TURN_LEFT_SENSOR_PIN) != BLACK) {
+         motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+         motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,HIGH_SPEED);
+       }
+       while (digitalRead(RIGHT_SENSOR_PIN) != BLACK) {
+         motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+         motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
+       }
+     }
+     digitalWrite(FAN_INA, LOW);
+     digitalWrite(FAN_INB, LOW);
+     currentState = CIZGI_IZLE;
+     break;
    }
 }
