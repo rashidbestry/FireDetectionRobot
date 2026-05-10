@@ -252,8 +252,8 @@ void loop() {
      dur();
      digitalWrite(FAN_INA, LOW);
      digitalWrite(FAN_INB, HIGH);
-     unsigned long startmilli = millis();
-     while (millis() - startmilli < 5000) {
+     unsigned long startmillis = millis();
+     while (millis() - startmillis < 3000) {
        while (digitalRead(TURN_LEFT_SENSOR_PIN) != BLACK) {
          motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
          motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,HIGH_SPEED);
@@ -262,6 +262,11 @@ void loop() {
          motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
          motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
        }
+     }
+     unsigned long startmillis2 = millis();
+     while (millis() - startmillis2 < 5000) {
+         motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+         motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,HIGH_SPEED);
      }
      digitalWrite(FAN_INA, LOW);
      digitalWrite(FAN_INB, LOW);
