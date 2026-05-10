@@ -82,7 +82,8 @@ void sola_don_90() {
   delay(500);
   motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
   motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
-  delay(350);
+  delay(100);
+  while(digitalRead(LEFT_SENSOR_PIN) != BLACK);
   dur();
   delay(500);
 }
@@ -94,20 +95,21 @@ void saga_don_90(int TURN_L) {
   delay(500);
   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
   motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,HIGH_SPEED);
-  delay(350);
+  delay(100);
+  while(digitalRead(RIGHT_SENSOR_PIN) != BLACK);
   dur();
   delay(500);
 }
 
 void tam_tur_don() {
   dur();
+  delay(500);
   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
   motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
-  unsigned long baslangic_zamani = millis();
-
-  while (millis() - baslangic_zamani < 700) {
-
-  }
+  delay(100);
+  while(digitalRead(RIGHT_SENSOR_PIN) != BLACK);
+  dur();
+  delay(500);
 }
 
 void cizgiyi_takip_et(int LS, int MS, int RS) {
@@ -218,14 +220,7 @@ void loop() {
      break;
 
    case DUVAR:
-     dur();
-     geri_git();
-     delay(200);
-     dur();
-     delay(500);
      tam_tur_don();
-     dur();
-     delay(500);
      currentState = CIZGI_IZLE;
      break;
 
