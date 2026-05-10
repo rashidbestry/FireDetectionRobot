@@ -76,29 +76,28 @@ void dur() {
 }
 
 void sola_don_90() {
-  duz_git();
-  delay(100);
   dur();
-  delay(500);
+  delay(200);
   motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
   motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
   delay(100);
   while(digitalRead(LEFT_SENSOR_PIN) != BLACK);
   dur();
-  delay(500);
+  delay(200);
 }
 
-void saga_don_90(int TURN_L) {
-  duz_git();
-  delay(100);
+void saga_don_90() {
   dur();
-  delay(500);
+  delay(200);
+  if (digitalRead(LEFT_SENSOR_PIN) == BLACK || digitalRead(MED_SENSOR_PIN) == BLACK || digitalRead(RIGHT_SENSOR_PIN) == BLACK) {
+    return;
+  }
   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
   motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,HIGH_SPEED);
   delay(100);
   while(digitalRead(RIGHT_SENSOR_PIN) != BLACK);
   dur();
-  delay(500);
+  delay(200);
 }
 
 void tam_tur_don() {
@@ -114,12 +113,20 @@ void tam_tur_don() {
 
 void cizgiyi_takip_et(int LS, int MS, int RS) {
   if (LS == BLACK && MS == WHITE && RS == WHITE) {
+    motor_dur(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2);
+    motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
+  }
+  else if (LS == BLACK && MS == BLACK && RS == WHITE) {
     motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2,MED_SPEED+TOLERANS);
     motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
   }
   else if (LS == WHITE && MS == WHITE && RS == BLACK) {
       motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
-      motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,MED_SPEED);
+      motor_dur(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2);
+  }
+  else if (LS == WHITE && MS == BLACK && RS == BLACK) {
+    motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
+    motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,MED_SPEED);
   }
   else {
       duz_git();
@@ -143,15 +150,21 @@ int front_distance_value() {
 // ----------------------------- KAVŞAK KARAR MANTIĞI ----------------------------
 
 void kavsak_karari_ver(int TURN_L, int TURN_R) {
-
-  if (TURN_L == BLACK && TURN_R == BLACK) {
+  duz_git();
+  long timespot = millis();
+  while (millis() - timespot < 150) {
+    if (digitalRead(LEFT_SENSOR_PIN) == BLACK) {
+      TURN_L = BLACK;
+    }
+    if (digitalRead(RIGHT_SENSOR_PIN) == BLACK) {
+      TURN_R = BLACK;
+    }
+  }
+  if (TURN_L == BLACK) {
     sola_don_90();
   }
-  if (TURN_L == BLACK && TURN_R == WHITE ) {
-    sola_don_90();
-  }
-  if (TURN_L == WHITE && TURN_R == BLACK ) {
-    saga_don_90(TURN_L);
+  if (TURN_R == BLACK) {
+    saga_don_90();
   }
 }
 // ------------------------------------ SETUP ------------------------------------
@@ -185,7 +198,7 @@ void loop() {
    int mesafe1 = front_distance_value();
    int mesafe2 = front_distance_value();
    int mesafe3 = front_distance_value();
-   if ((mesafe1 + mesafe2 + mesafe3) / 3  < 10) {
+   if ((mesafe1 + mesafe2 + mesafe3) / 3  < 5) {
        currentState = DUVAR;
    }
 
