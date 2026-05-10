@@ -36,16 +36,16 @@ const int FAN_INB = 8;
 const int BLACK = 1;
 const int WHITE = 0;
 
-const int LOW_SPEED = 55;
-const int MED_SPEED = 125;
-const int HIGH_SPEED = 255;
+bool saga;
 
-// --- HAFIZA ---
-String stack[10];
-int stack_sayac = 0;
+const int LOW_SPEED = 55;
+const int MED_SPEED = 105;
+const int HIGH_SPEED = 210;
+
+const int TOLERANS = 25;
 
 // --- DURUM MAKİNESİ ---
-enum RobotState {CIZGI_IZLE, YANGIN_SONDUR, DUVAR, ODAYA_GIRIS};
+enum RobotState {CIZGI_IZLE, DUVAR};
 RobotState currentState = CIZGI_IZLE;
 
 // ----------------------------- MOTOR FONKSİYONLARI -----------------------------
@@ -61,13 +61,13 @@ void motor_dur(int pin1, int pin2) {
 
 // ----------------------------- ROBOT FONKSİYONLARI -----------------------------
 void duz_git() {
-  motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, MED_SPEED + 40);
-  motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, MED_SPEED);
+  motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
+  motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
 }
 
 void geri_git() {
-  motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, MED_SPEED);
-  motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, MED_SPEED + 40);
+  motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
+  motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
 }
 
 void dur() {
@@ -76,67 +76,52 @@ void dur() {
 }
 
 void sola_don_90() {
+  duz_git();
+  delay(100);
+  dur();
+  delay(500);
   motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
-  motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, LOW_SPEED);
-  delay(250);
+  motor_geri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
+  delay(350);
+  dur();
+  delay(500);
 }
 
-void saga_don_90() {
-  motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
-  motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, LOW_SPEED);
-  delay(250);
+void saga_don_90(int TURN_L) {
+  duz_git();
+  delay(100);
+  dur();
+  delay(500);
+  motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
+  motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2,HIGH_SPEED);
+  delay(350);
+  dur();
+  delay(500);
 }
 
 void tam_tur_don() {
   dur();
   motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
-  motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
-  delay(550);
+  motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
+  unsigned long baslangic_zamani = millis();
+
+  while (millis() - baslangic_zamani < 700) {
+
+  }
 }
 
 void cizgiyi_takip_et(int LS, int MS, int RS) {
   if (LS == BLACK && MS == WHITE && RS == WHITE) {
-      motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
-      motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, LOW_SPEED);
+    motor_dur(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2);
+    motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED);
   }
   else if (LS == WHITE && MS == WHITE && RS == BLACK) {
-      motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED);
-      motor_ileri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, LOW_SPEED);
+      motor_ileri(SOL_MOTOR_PIN1, SOL_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
+      motor_dur(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2);
   }
   else {
       duz_git();
   }
-}
-
-// ----------------------------- KAVŞAK KARAR MANTIĞI ----------------------------
-void kavsak_karari_ver(int TURN_L, int TURN_R) {
-    // Hafızalı Karar Ağacı (SOL -> SAĞ -> İLERİ Önceliği)
-    if (TURN_L == BLACK && TURN_R == BLACK && stack->length() == 0) {
-        stack[0] = "DUZ";
-        stack_sayac++;
-        sola_don_90();
-        currentState = ODAYA_GIRIS;
-    }
-    else if (TURN_L == BLACK && TURN_R == BLACK && stack->length() > 0) {
-        stack[0] = "SAG";
-        stack_sayac++;
-        duz_git();
-        delay(1000);
-        currentState = ODAYA_GIRIS;
-}
-    }
-    // SADECE SOLA DALLANMA VARSA
-    else if (TURN_L == BLACK && TURN_R == WHITE) {
-        sola_don_90();
-        currentState = ODAYA_GIRIS;
-    }
-    // SADECE SAĞA DALLANMA VARSA
-    else if (TURN_R == BLACK && TURN_L == WHITE) {
-        saga_don_90();
-        currentState = ODAYA_GIRIS;
-    }else {
-        cizgiyi_takip_et(0, 0, 0);
-    }
 }
 
 // ------------------------------- MESAFE İŞLEMLERİ ------------------------------
@@ -148,7 +133,7 @@ int front_distance_value() {
     digitalWrite(FRONT_TRIG_PIN, LOW);
     front_duration = pulseIn(FRONT_ECHO_PIN, HIGH);
     front_distance = front_duration * 0.034 / 2;
-    Serial.println(front_distance);
+    // Serial.println(front_distance);
     return front_distance;
 }
 
@@ -160,12 +145,26 @@ int back_distance_value() {
     digitalWrite(BACK_TRIG_PIN, LOW);
     back_duration = pulseIn(BACK_ECHO_PIN, HIGH);
     back_distance = back_duration * 0.034 / 2;
+    // Serial.println(front_distance);
     return back_distance;
 }
 
+// ----------------------------- KAVŞAK KARAR MANTIĞI ----------------------------
+
+void kavsak_karari_ver(int TURN_L, int TURN_R) {
+
+  if (TURN_L == BLACK && TURN_R == BLACK) {
+    sola_don_90();
+  }
+  if (TURN_L == BLACK && TURN_R == WHITE ) {
+    sola_don_90();
+  }
+  if (TURN_L == WHITE && TURN_R == BLACK ) {
+    saga_don_90(TURN_L);
+  }
+}
 // ------------------------------------ SETUP ------------------------------------
 void setup() {
-  kavsakAsamasi = 0;
   Serial.begin(9600);
 
   pinMode(SAG_MOTOR_PIN1, OUTPUT);
@@ -191,16 +190,16 @@ void setup() {
 
 // ------------------------------------ LOOP -------------------------------------
 void loop() {
-   // 1. Duvar Kontrolü (Hata önleyici > 0 şartı eklendi)
+
    int mesafe = front_distance_value();
    if (mesafe > 0 && mesafe < 5) {
        currentState = DUVAR;
    }
 
    // 2. Acil Durum Kontrolü
-   if (digitalRead(FIRE_PIN) == 0) {
-     currentState = YANGIN_SONDUR;
-   }
+   // if (digitalRead(FIRE_PIN) == 0) {
+   //   currentState = YANGIN_SONDUR;
+   // }
 
    // 3. Sensör Okumaları
    int LS = digitalRead(LEFT_SENSOR_PIN);
@@ -209,42 +208,32 @@ void loop() {
    int TURN_L = digitalRead(TURN_LEFT_SENSOR_PIN);
    int TURN_R = digitalRead(TURN_RIGHT_SENSOR_PIN);
 
-   // 4. Durum Makinesi
    switch (currentState) {
+   case CIZGI_IZLE:
+     if ((TURN_L == BLACK || TURN_R == BLACK) && (LS == BLACK || MS == BLACK || RS == BLACK)) {
+       kavsak_karari_ver(TURN_L, TURN_R);
+     } else {
+       cizgiyi_takip_et(LS, MS, RS);
+     }
+     break;
 
-     case CIZGI_IZLE:
-       // HATA DÜZELTİLDİ: && yerine || kullanıldı.
-       if (TURN_L == BLACK || TURN_R == BLACK) {
-         dur();
-         kavsak_karari_ver(TURN_L, TURN_R);
-       }
-       else {
-         cizgiyi_takip_et(LS, MS, RS);
-       }
-       break;
+   case DUVAR:
+     dur();
+     geri_git();
+     delay(200);
+     dur();
+     delay(500);
+     tam_tur_don();
+     dur();
+     delay(500);
+     currentState = CIZGI_IZLE;
+     break;
 
-     case ODAYA_GIRIS:
-
-
-       break;
-
-     case DUVAR:
-       dur();
-       geri_git();
-       delay(200);
-       dur();
-       delay(500);
-       tam_tur_don();
-       dur();
-       delay(500);
-       currentState = CIZGI_IZLE;
-       break;
-
-     case YANGIN_SONDUR:
-       dur();
-       digitalWrite(FAN_INA, LOW);
-       digitalWrite(FAN_INB, HIGH);
-       while(1); // Yangın sönene kadar sistemi kilitle
-       break;
+   //   case YANGIN_SONDUR:
+   //     dur();
+   //     digitalWrite(FAN_INA, LOW);
+   //     digitalWrite(FAN_INB, HIGH);
+   //     while(1); // Yangın sönene kadar sistemi kilitle
+   //     break;
    }
 }
