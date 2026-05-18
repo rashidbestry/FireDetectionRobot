@@ -28,6 +28,7 @@ int back_distance;
 
 // --------------------------------- DİĞER PİNLER --------------------------------
 const int FIRE_PIN = 13;
+const int FIRE_PIN2 = A0;
 const int FAN_INA = 7;
 const int FAN_INB = 8;
 
@@ -107,7 +108,7 @@ void tam_tur_don() {
   motor_geri(SAG_MOTOR_PIN1, SAG_MOTOR_PIN2, HIGH_SPEED + TOLERANS);
   delay(100);
   while(digitalRead(RIGHT_SENSOR_PIN) != BLACK) {
-    if (digitalRead(FIRE_PIN) == 0) {
+    if (digitalRead(FIRE_PIN) == 0 || digitalRead(FIRE_PIN2) == 0) {
       currentState = YANGIN_SONDUR;
       break;
     }
@@ -208,6 +209,7 @@ void setup() {
   pinMode(BACK_ECHO_PIN, INPUT);
 
   pinMode(FIRE_PIN, INPUT);
+  pinMode(FIRE_PIN2, INPUT);
   pinMode(FAN_INA, OUTPUT);
   pinMode(FAN_INB, OUTPUT);
 }
@@ -223,7 +225,7 @@ void loop() {
    }
 
    // 2. Acil Durum Kontrolü
-   if (digitalRead(FIRE_PIN) == 0) {
+   if (digitalRead(FIRE_PIN) == 0 || digitalRead(FIRE_PIN2) == 0) {
      currentState = YANGIN_SONDUR;
    }
 
