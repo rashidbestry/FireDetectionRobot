@@ -11,7 +11,7 @@ const int LEFT_SENSOR_PIN = 2;
 const int MED_SENSOR_PIN = 3;
 const int RIGHT_SENSOR_PIN = 4;
 
-// ------------------- YENİ 2 DIŞ SENSÖR (KAVŞAK VE DÖNÜŞ İÇİN) ------------------
+// -------------------  2 DIŞ SENSÖR (KAVŞAK VE DÖNÜŞ İÇİN) ------------------
 const int TURN_RIGHT_SENSOR_PIN = 11;
 const int TURN_LEFT_SENSOR_PIN = 12;
 
