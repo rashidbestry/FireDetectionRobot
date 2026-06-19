@@ -64,9 +64,17 @@ Sistemin genel güç dağılımı ve sinyal kablolama yapısı aşağıdaki şem
 
 Sistemin otonom çizgi izleme, engel aşma ve yangın söndürme durumları (State Machine) arasındaki geçişlerini aşağıdaki videodan izleyebilirsiniz.
 
-[![Otonom Yangın Söndürme Robotu](resources/Robot.png)](https://youtu.be/bIs4kzbj7zw)
+[![Otonom Yangın Söndürme Robotu](resources/Youtube.png)](https://youtu.be/bIs4kzbj7zw)
 
 > 💡 *Videoyu izlemek için yukarıdaki görsele tıklayın.*
+
+---
+## 📄 Proje Raporu ve Teknik Detaylar
+
+Projenin geliştirilme sürecini, donanım seçim kriterlerini, **Proje Raporu**'na aşağıdaki bağlantıdan ulaşabilirsiniz.
+
+🔗 [**Detaylı Proje Raporunu Görüntüle (PDF)**](resources/33-RobotRapor.pdf)
+
 
 ---
 ## 👥 Proje Ekibi
